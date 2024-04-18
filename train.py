@@ -18,22 +18,23 @@ print(f"Using {device} device")
 model = UNet(n_class=1)
 
 learning_rate = 1e-2  # how much to update model after each batch/epoch
-batch_size = 64  # number of samples propagated through network before parameters are updated
-epochs = 10  # number of times to iterate over the dataset
+batch_size = 1  # number of samples propagated through network before parameters are updated
+epochs = 2  # number of times to iterate over the dataset
 
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 dataset = DummyCTDataset("/lhome/clarkcs/aRTist_simulations/cylinder/1mm-cylinder_100projs_center-slice.npy", 
                          "/lhome/clarkcs/aRTist_simulations/cylinder/1mm-cylinder_1000projs_center-slice.npy",
-                         64 * 10)
-train_dataloader = DataLoader(dataset)
+                         10)
+train_dataloader = DataLoader(dataset, batch_size=batch_size)
 
 def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     # Set model to training mode
     model.train()
     for batch, (X, y) in enumerate(dataloader):
+        print(batch)
         # Compute prediction and loss
         pred = model(X)
         loss = loss_fn(pred, y)
@@ -55,11 +56,11 @@ for i in range(epochs):
     print(f"Epoch {i+1}\n---------------------------------------")
     train_loop(train_dataloader, model, loss_fn, optimizer)
 
-# train_features, train_labels = next(iter(train_dataloader))
-# model.eval()
-# with torch.no_grad():
-#     pred = model(train_features)
-#     fig, (ax1, ax2) = plt.subplots(1, 2)
-#     ax1.imshow(pred.squeeze())
-#     ax2.imshow(train_dataloader.squeeze())
-
+train_features, train_labels = next(iter(train_dataloader))
+model.eval()
+with torch.no_grad():
+    pred = model(train_features)
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    ax1.imshow(pred.squeeze())
+    ax2.imshow(train_labels.squeeze())
+    plt.show()

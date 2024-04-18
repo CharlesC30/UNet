@@ -14,20 +14,20 @@ class UNet(nn.Module):
         # Each block in the encoder consists of two convolutional layers followed by a max-pooling layer, with the exception of the last block which does not include a max-pooling layer.
         # Modified from: https://towardsdatascience.com/cook-your-first-u-net-in-pytorch-b3297a844cf3
         # -------
-        self.e11 = nn.Conv2d(1, 64, kernel_size=3)
-        self.e12 = nn.Conv2d(64, 64, kernel_size=3)
+        self.e11 = nn.Conv2d(1, 64, kernel_size=3, padding=1)
+        self.e12 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
         self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2) 
 
-        self.e21 = nn.Conv2d(64, 128, kernel_size=3)
-        self.e22 = nn.Conv2d(128, 128, kernel_size=3)
+        self.e21 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.e22 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
         self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2) 
 
-        self.e31 = nn.Conv2d(128, 256, kernel_size=3)
-        self.e32 = nn.Conv2d(256, 256, kernel_size=3)
+        self.e31 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+        self.e32 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
         self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2) 
 
-        self.e41 = nn.Conv2d(256, 512, kernel_size=3)
-        self.e42 = nn.Conv2d(512, 512, kernel_size=3)
+        self.e41 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
+        self.e42 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
         self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2) 
 
         # self.e51 = nn.Conv2d(512, 1024, kernel_size=3) 
@@ -39,20 +39,20 @@ class UNet(nn.Module):
 
         # Decoder
         self.upconv1 = nn.ConvTranspose2d(1024, 512, kernel_size=2, stride=2)
-        self.d11 = nn.Conv2d(1024, 512, kernel_size=3)
-        self.d12 = nn.Conv2d(512, 512, kernel_size=3)
+        self.d11 = nn.Conv2d(1024, 512, kernel_size=3, padding=1)
+        self.d12 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
 
         self.upconv2 = nn.ConvTranspose2d(512, 256, kernel_size=2, stride=2)
-        self.d21 = nn.Conv2d(512, 256, kernel_size=3)
-        self.d22 = nn.Conv2d(256, 256, kernel_size=3)
+        self.d21 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
+        self.d22 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
 
         self.upconv3 = nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2)
-        self.d31 = nn.Conv2d(256, 128, kernel_size=3)
-        self.d32 = nn.Conv2d(128, 128, kernel_size=3)
+        self.d31 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
+        self.d32 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
 
         self.upconv4 = nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2)
-        self.d41 = nn.Conv2d(128, 64, kernel_size=3)
-        self.d42 = nn.Conv2d(64, 64, kernel_size=3)
+        self.d41 = nn.Conv2d(128, 64, kernel_size=3, padding=1)
+        self.d42 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
 
         # Output layer
         self.outconv = nn.Conv2d(64, n_class, kernel_size=1)
