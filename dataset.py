@@ -18,8 +18,6 @@ class DummyCTDataset(Dataset):
             n_copies, 
             transform=transforms.Compose([ToTensor(), Resize((1008, 1008))]), 
             target_transform=transforms.Compose([ToTensor(), Resize((1008, 1008))]),
-            # transform=ToTensor(), 
-            # target_transform=ToTensor(),
             ):
         self.sparse_view_path = sparse_view_path
         self.full_view_path = full_view_path

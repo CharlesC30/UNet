@@ -4,6 +4,8 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
 from unet import UNet
+from pconv_unet import PConvUNet
+from loss import VGG16PartialLoss
 from dataset import DummyCTDataset
 
 device = (
@@ -15,18 +17,19 @@ device = (
 )
 print(f"Using {device} device")
 
+# model = PConvUNet(n_class=1)
 model = UNet(n_class=1)
 
-learning_rate = 1e-2  # how much to update model after each batch/epoch
+learning_rate = 1e-4  # how much to update model after each batch/epoch
 batch_size = 1  # number of samples propagated through network before parameters are updated
-epochs = 2  # number of times to iterate over the dataset
+epochs = 10  # number of times to iterate over the dataset
 
-loss_fn = nn.CrossEntropyLoss()
+loss_fn = VGG16PartialLoss(vgg_path="/zhome/clarkcs/.torch/vgg16-397923af.pth")
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 dataset = DummyCTDataset("/lhome/clarkcs/aRTist_simulations/cylinder/1mm-cylinder_100projs_center-slice.npy", 
                          "/lhome/clarkcs/aRTist_simulations/cylinder/1mm-cylinder_1000projs_center-slice.npy",
-                         10)
+                         64)
 train_dataloader = DataLoader(dataset, batch_size=batch_size)
 
 def train_loop(dataloader, model, loss_fn, optimizer):
@@ -63,4 +66,5 @@ with torch.no_grad():
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.imshow(pred.squeeze())
     ax2.imshow(train_labels.squeeze())
+    # plt.savefig("/zhome/clarkcs/Documents/repos/U-Net/slurm_training.png")
     plt.show()
