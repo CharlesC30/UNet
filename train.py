@@ -17,8 +17,8 @@ device = (
 )
 print(f"Using {device} device")
 
-# model = PConvUNet(n_class=1)
-model = UNet(n_class=1)
+model = PConvUNet(n_channels=1)
+# model = UNet(n_class=1)
 
 learning_rate = 1e-4  # how much to update model after each batch/epoch
 batch_size = 1  # number of samples propagated through network before parameters are updated
@@ -36,10 +36,10 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     # Set model to training mode
     model.train()
-    for batch, (X, y) in enumerate(dataloader):
+    for batch, (X, mask, y) in enumerate(dataloader):
         print(batch)
         # Compute prediction and loss
-        pred = model(X)
+        pred = model(X, mask)  
         loss = loss_fn(pred, y)
 
         # Backpropagation

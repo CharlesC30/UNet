@@ -1,21 +1,18 @@
 import torch
 import torch.nn as nn
 from torchvision import models
-from torch.nn.functional import relu, interpolate
+from torch.nn.functional import relu, interpolate, max_pool2d
 from partialconv2d import PartialConv2d
 
 
 # Note: original U-Net paper does not use padding on Conv2d, therefore image size changes after each convolution
 class PConvUNet(nn.Module):
-    def __init__(self, n_class):
+    def __init__(self, n_channels):
         super().__init__()
-        
         # Encoder
-        # In the encoder, convolutional layers with the Conv2d function are used to extract features from the input image. 
-        # Each block in the encoder consists of two convolutional layers followed by a max-pooling layer, with the exception of the last block which does not include a max-pooling layer.
         # Modified from: https://towardsdatascience.com/cook-your-first-u-net-in-pytorch-b3297a844cf3
         # -------
-        self.e11 = PartialConv2d(1, 64, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
+        self.e11 = PartialConv2d(n_channels, 64, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
         self.e12 = PartialConv2d(64, 64, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
         self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2) 
 
@@ -36,33 +33,47 @@ class PConvUNet(nn.Module):
 
         # Decoder
         # self.upconv1 = nn.ConvTranspose2d(1024, 512, kernel_size=2, stride=2)
-        self.d11 = nn.Conv2d(1024, 512, kernel_size=3, padding=1)
-        self.d12 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.d11 = PartialConv2d(1024, 512, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
+        self.d12 = PartialConv2d(512, 512, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
 
         # self.upconv2 = nn.ConvTranspose2d(512, 256, kernel_size=2, stride=2)
-        self.d21 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
-        self.d22 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        self.d21 = PartialConv2d(512, 256, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
+        self.d22 = PartialConv2d(256, 256, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
 
         # self.upconv3 = nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2)
-        self.d31 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
-        self.d32 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+        self.d31 = PartialConv2d(256, 128, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
+        self.d32 = PartialConv2d(128, 128, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
 
         # self.upconv4 = nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2)
-        self.d41 = nn.Conv2d(128, 64, kernel_size=3, padding=1)
-        self.d42 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.d41 = PartialConv2d(128, 64, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
+        self.d42 = PartialConv2d(64, 64, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
 
         # Output layer
-        self.outconv = nn.Conv2d(64, n_class, kernel_size=1)
+        self.outconv = nn.Conv2d(64, n_channels, kernel_size=1)
 
-    def forward(self, x):
+    @staticmethod
+    def encode_layer(input_x, input_mask, conv1, conv2):
+        out_e1, mask_e1 = conv1(input_x, mask_in=input_mask)
+        x_e1 = relu(out_e1)
+        out_e2, mask_e2 = conv2(x_e1, mask_in=mask_e1)
+        x_e2 = relu(out_e2)
+        return max_pool2d(x_e2, kernel_size=2, stride=2), max_pool2d(mask_e2, kernel_size=2, stride=2)
+
+    def forward(self, x, mask):
         # Encoder
-        xe11 = relu(self.e11(x))
-        xe12 = relu(self.e12(xe11))
+        out_e11, mask_e11 = self.e11(x, mask_in=mask)
+        xe11 = relu(out_e11)
+        out_e12, mask_e12 = self.e12(xe11, mask_in=mask_e11)
+        xe12 = relu(out_e12)
         xp1 = self.pool1(xe12)
+        mask_p1 = self.pool1(mask_e12)
 
-        xe21 = relu(self.e21(xp1))
-        xe22 = relu(self.e22(xe21))
+        out_e21, mask_e21 = self.e21(xp1, mask_p1)
+        xe21 = relu(out_e21)
+        out_e22, mask_e22 = self.e22(xe21, mask_e21)
+        xe22 = relu(out_e22)
         xp2 = self.pool2(xe22)
+        mask_p2 = self.pool2(mask_e22)
 
         xe31 = relu(self.e31(xp2))
         xe32 = relu(self.e32(xe31))
