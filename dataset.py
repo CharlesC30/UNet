@@ -37,5 +37,7 @@ class DummyCTDataset(Dataset):
         mask[full_view >= thresh] = 0
         # masked_image = mask * sparse_view
         target = sparse_view.astype(np.float32) - full_view.astype(np.float32)
-        return self.transform(sparse_view), self.transform(mask), self.target_transform(target)
+        return (self.transform(np.stack(3 * [sparse_view], axis=2)), 
+                self.transform(np.stack(3 * [mask], axis=2)), 
+                self.target_transform(np.stack(3 * [target], axis=2)))
     

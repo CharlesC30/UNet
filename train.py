@@ -17,19 +17,19 @@ device = (
 )
 print(f"Using {device} device")
 
-model = PConvUNet(n_channels=1)
+model = PConvUNet(n_channels=3)
 # model = UNet(n_class=1)
 
-learning_rate = 1e-4  # how much to update model after each batch/epoch
+learning_rate = 1e-2  # how much to update model after each batch/epoch
 batch_size = 1  # number of samples propagated through network before parameters are updated
-epochs = 10  # number of times to iterate over the dataset
+epochs = 1  # number of times to iterate over the dataset
 
 loss_fn = VGG16PartialLoss(vgg_path="/zhome/clarkcs/.torch/vgg16-397923af.pth")
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 dataset = DummyCTDataset("/lhome/clarkcs/aRTist_simulations/cylinder/1mm-cylinder_100projs_center-slice.npy", 
                          "/lhome/clarkcs/aRTist_simulations/cylinder/1mm-cylinder_1000projs_center-slice.npy",
-                         64)
+                         10)
 train_dataloader = DataLoader(dataset, batch_size=batch_size)
 
 def train_loop(dataloader, model, loss_fn, optimizer):
@@ -40,7 +40,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         print(batch)
         # Compute prediction and loss
         pred = model(X, mask)  
-        loss = loss_fn(pred, y)
+        loss = loss_fn(pred, y)[0]
 
         # Backpropagation
         loss.backward()
