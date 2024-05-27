@@ -18,18 +18,19 @@ device = (
 print(f"Using {device} device")
 
 model = PConvUNet(n_channels=3)
-# model = UNet(n_class=1)
+# model = UNet(n_class=3)
 
 learning_rate = 1e-2  # how much to update model after each batch/epoch
 batch_size = 1  # number of samples propagated through network before parameters are updated
-epochs = 1  # number of times to iterate over the dataset
+epochs = 10  # number of times to iterate over the dataset
 
 loss_fn = VGG16PartialLoss(vgg_path="/zhome/clarkcs/.torch/vgg16-397923af.pth")
+# loss_fn = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 dataset = DummyCTDataset("/lhome/clarkcs/aRTist_simulations/cylinder/1mm-cylinder_100projs_center-slice.npy", 
                          "/lhome/clarkcs/aRTist_simulations/cylinder/1mm-cylinder_1000projs_center-slice.npy",
-                         10)
+                         64)
 train_dataloader = DataLoader(dataset, batch_size=batch_size)
 
 def train_loop(dataloader, model, loss_fn, optimizer):
@@ -41,6 +42,7 @@ def train_loop(dataloader, model, loss_fn, optimizer):
         # Compute prediction and loss
         pred = model(X, mask)  
         loss = loss_fn(pred, y)[0]
+        # loss = loss_fn(pred, y)
 
         # Backpropagation
         loss.backward()
@@ -59,12 +61,12 @@ for i in range(epochs):
     print(f"Epoch {i+1}\n---------------------------------------")
     train_loop(train_dataloader, model, loss_fn, optimizer)
 
-train_features, train_labels = next(iter(train_dataloader))
+features, mask, target = next(iter(train_dataloader))
 model.eval()
 with torch.no_grad():
-    pred = model(train_features)
+    pred = model(features, mask)
     fig, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.imshow(pred.squeeze())
-    ax2.imshow(train_labels.squeeze())
+    ax1.imshow(pred.squeeze()[0])
+    ax2.imshow(target.squeeze()[0])
     # plt.savefig("/zhome/clarkcs/Documents/repos/U-Net/slurm_training.png")
     plt.show()

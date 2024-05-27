@@ -49,7 +49,7 @@ class PConvUNet(nn.Module):
         self.d42 = PartialConv2d(64, 64, kernel_size=3, padding=1, bias=False, multi_channel=True, return_mask=True)
 
         # Output layer
-        self.outconv = nn.Conv2d(64 + n_channels, n_channels, kernel_size=1)
+        self.outconv = PartialConv2d(64 + n_channels, n_channels, kernel_size=1, bias=False, multi_channel=True, return_mask=True)
 
     @staticmethod
     def pconv_layer(input_x, input_mask, conv1, conv2):
@@ -100,7 +100,7 @@ class PConvUNet(nn.Module):
         x_d4, mask_d4 = self.decode_layer(x_d3, mask_d3, x_e1, mask_e1, self.d41, self.d42)
 
         # Output layer
-        out = self.outconv(torch.cat([x_d4, x], dim=1))
+        out, _ = self.outconv(torch.cat([x_d4, x], dim=1), mask_in=torch.cat([mask_d4, mask], dim=1))
 
         return out
     
